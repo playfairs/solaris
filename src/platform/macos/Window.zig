@@ -1,10 +1,5 @@
 const std = @import("std");
-const c = @cImport({
-    @cInclude("objc/runtime.h");
-    @cInclude("objc/message.h");
-    @cInclude("Cocoa/Cocoa.h");
-    @cInclude("QuartzCore/CAMetalLayer.h");
-});
+const apl_runtime = @import("apl_runtime_trans_c");
 
 const Renderer = @import("../../renderer/Renderer.zig");
 const Terminal = @import("../../terminal/Terminal.zig");
@@ -14,9 +9,9 @@ const Mouse = @import("../../input/Mouse.zig");
 
 allocator: std.mem.Allocator,
 config: *const Config,
-window: ?*c.NSWindow,
-metal_layer: ?*c.CAMetalLayer,
-view: ?*c.NSView,
+window: ?*apl_runtime.NSWindow,
+metal_layer: ?*apl_runtime.CAMetalLayer,
+view: ?*apl_runtime.NSView,
 renderer: ?*Renderer,
 terminal: ?*Terminal,
 running: bool,
@@ -56,69 +51,69 @@ pub fn deinit(self: *Self) void {
 pub fn create(self: *Self) !void {
     self.shader_source = try loadShaders(self.allocator);
 
-    const ns_app_class = c.objc_getClass("NSApplication");
-    const shared_app_sel = c.sel_registerName("sharedApplication");
-    const ns_app = c.objc_msgSend(ns_app_class, shared_app_sel);
+    const ns_app_class = apl_runtime.objc_getClass("NSApplication");
+    const shared_app_sel = apl_runtime.sel_registerName("sharedApplication");
+    const ns_app = apl_runtime.objc_msgSend(ns_app_class, shared_app_sel);
 
-    const set_policy_sel = c.sel_registerName("setActivationPolicy:");
-    _ = c.objc_msgSend(ns_app, set_policy_sel, @as(c.NSApplicationActivationPolicy, c.NSApplicationActivationPolicyRegular));
+    const set_policy_sel = apl_runtime.sel_registerName("setActivationPolicy:");
+    _ = apl_runtime.objc_msgSend(ns_app, set_policy_sel, @as(apl_runtime.NSApplicationActivationPolicy, apl_runtime.NSApplicationActivationPolicyRegular));
 
-    const style_mask: c.NSWindowStyleMask = c.NSWindowStyleMaskBorderless | c.NSWindowStyleMaskResizable | c.NSWindowStyleMaskClosable | c.NSWindowStyleMaskMiniaturizable | c.NSWindowStyleMaskFullSizeContentView;
+    const style_mask: apl_runtime.NSWindowStyleMask = apl_runtime.NSWindowStyleMaskBorderless | apl_runtime.NSWindowStyleMaskResizable | apl_runtime.NSWindowStyleMaskClosable | apl_runtime.NSWindowStyleMaskMiniaturizable | apl_runtime.NSWindowStyleMaskFullSizeContentView;
 
-    const window_rect = c.NSMakeRect(0, 0, @floatFromInt(self.config.window_width), @floatFromInt(self.config.window_height));
+    const window_rect = apl_runtime.NSMakeRect(0, 0, @floatFromInt(self.config.window_width), @floatFromInt(self.config.window_height));
 
-    const window_class = c.objc_getClass("NSWindow");
-    const alloc_sel = c.sel_registerName("alloc");
-    const init_sel = c.sel_registerName("initWithContentRect:styleMask:backing:defer:");
+    const window_class = apl_runtime.objc_getClass("NSWindow");
+    const alloc_sel = apl_runtime.sel_registerName("alloc");
+    const init_sel = apl_runtime.sel_registerName("initWithContentRect:styleMask:backing:defer:");
 
-    const window = c.objc_msgSend(window_class, alloc_sel);
-    self.window = @ptrCast(c.objc_msgSend(window, init_sel, window_rect, style_mask, @as(c.NSBackingStoreType, c.NSBackingStoreBuffered), false));
+    const window = apl_runtime.objc_msgSend(window_class, alloc_sel);
+    self.window = @ptrCast(apl_runtime.objc_msgSend(window, init_sel, window_rect, style_mask, @as(apl_runtime.NSBackingStoreType, apl_runtime.NSBackingStoreBuffered), false));
 
     if (self.window == null) {
         return error.WindowCreationFailed;
     }
 
-    const center_sel = c.sel_registerName("center");
-    _ = c.objc_msgSend(self.window.?, center_sel);
+    const center_sel = apl_runtime.sel_registerName("center");
+    _ = apl_runtime.objc_msgSend(self.window.?, center_sel);
 
-    const title_sel = c.sel_registerName("setTitle:");
-    const ns_string_class = c.objc_getClass("NSString");
-    const str_sel = c.sel_registerName("stringWithUTF8String:");
-    const title = c.objc_msgSend(ns_string_class, str_sel, "Solaritty");
-    _ = c.objc_msgSend(self.window.?, title_sel, title);
+    const title_sel = apl_runtime.sel_registerName("setTitle:");
+    const ns_string_class = apl_runtime.objc_getClass("NSString");
+    const str_sel = apl_runtime.sel_registerName("stringWithUTF8String:");
+    const title = apl_runtime.objc_msgSend(ns_string_class, str_sel, "Solaritty");
+    _ = apl_runtime.objc_msgSend(self.window.?, title_sel, title);
 
-    const set_titlebar_sel = c.sel_registerName("setTitlebarAppearsTransparent:");
-    _ = c.objc_msgSend(self.window.?, set_titlebar_sel, true);
+    const set_titlebar_sel = apl_runtime.sel_registerName("setTitlebarAppearsTransparent:");
+    _ = apl_runtime.objc_msgSend(self.window.?, set_titlebar_sel, true);
 
-    const set_title_vis_sel = c.sel_registerName("setTitleVisibility:");
-    _ = c.objc_msgSend(self.window.?, set_title_vis_sel, @as(c.NSWindowTitleVisibility, c.NSWindowTitleVisibilityHidden));
+    const set_title_vis_sel = apl_runtime.sel_registerName("setTitleVisibility:");
+    _ = apl_runtime.objc_msgSend(self.window.?, set_title_vis_sel, @as(apl_runtime.NSWindowTitleVisibility, apl_runtime.NSWindowTitleVisibilityHidden));
 
-    const set_opaque_sel = c.sel_registerName("setOpaque:");
-    _ = c.objc_msgSend(self.window.?, set_opaque_sel, false);
+    const set_opaque_sel = apl_runtime.sel_registerName("setOpaque:");
+    _ = apl_runtime.objc_msgSend(self.window.?, set_opaque_sel, false);
 
-    const set_bkg_sel = c.sel_registerName("setBackgroundColor:");
-    const color_class = c.objc_getClass("NSColor");
-    const clear_color_sel = c.sel_registerName("clearColor");
-    const clear_color = c.objc_msgSend(color_class, clear_color_sel);
-    _ = c.objc_msgSend(self.window.?, set_bkg_sel, clear_color);
+    const set_bkg_sel = apl_runtime.sel_registerName("setBackgroundColor:");
+    const color_class = apl_runtime.objc_getClass("NSColor");
+    const clear_color_sel = apl_runtime.sel_registerName("clearColor");
+    const clear_color = apl_runtime.objc_msgSend(color_class, clear_color_sel);
+    _ = apl_runtime.objc_msgSend(self.window.?, set_bkg_sel, clear_color);
 
-    const set_corner_radius = c.sel_registerName("setCornerRadius:");
-    _ = c.objc_msgSend(self.window.?, set_corner_radius, @as(f64, 10.0));
+    const set_corner_radius = apl_runtime.sel_registerName("setCornerRadius:");
+    _ = apl_runtime.objc_msgSend(self.window.?, set_corner_radius, @as(f64, 10.0));
 
-    const view_class = c.objc_getClass("NSView");
-    const view_alloc = c.objc_msgSend(view_class, alloc_sel);
+    const view_class = apl_runtime.objc_getClass("NSView");
+    const view_alloc = apl_runtime.objc_msgSend(view_class, alloc_sel);
 
-    const content_rect_sel = c.sel_registerName("contentRectForFrameRect:");
-    const content_rect: c.NSRect = @bitCast(c.objc_msgSend(self.window.?, content_rect_sel, window_rect));
+    const content_rect_sel = apl_runtime.sel_registerName("contentRectForFrameRect:");
+    const content_rect: apl_runtime.NSRect = @bitCast(apl_runtime.objc_msgSend(self.window.?, content_rect_sel, window_rect));
 
-    const init_frame_sel = c.sel_registerName("initWithFrame:");
-    const view = c.objc_msgSend(view_alloc, init_frame_sel, content_rect);
+    const init_frame_sel = apl_runtime.sel_registerName("initWithFrame:");
+    const view = apl_runtime.objc_msgSend(view_alloc, init_frame_sel, content_rect);
     self.view = @ptrCast(view);
 
     try self.setupMetalLayer();
 
-    const set_content_sel = c.sel_registerName("setContentView:");
-    _ = c.objc_msgSend(self.window.?, set_content_sel, view);
+    const set_content_sel = apl_runtime.sel_registerName("setContentView:");
+    _ = apl_runtime.objc_msgSend(self.window.?, set_content_sel, view);
 
     const renderer = try self.allocator.create(Renderer);
     renderer.* = try Renderer.init(self.allocator, self.config);
@@ -141,11 +136,11 @@ pub fn create(self: *Self) !void {
 
     try self.terminal.?.spawn();
 
-    const make_key_sel = c.sel_registerName("makeKeyAndOrderFront:");
-    _ = c.objc_msgSend(self.window.?, make_key_sel, null);
+    const make_key_sel = apl_runtime.sel_registerName("makeKeyAndOrderFront:");
+    _ = apl_runtime.objc_msgSend(self.window.?, make_key_sel, null);
 
-    const activate_sel = c.sel_registerName("activateIgnoringOtherApps:");
-    _ = c.objc_msgSend(ns_app, activate_sel, true);
+    const activate_sel = apl_runtime.sel_registerName("activateIgnoringOtherApps:");
+    _ = apl_runtime.objc_msgSend(ns_app, activate_sel, true);
 
     self.running = true;
 }
@@ -153,62 +148,62 @@ pub fn create(self: *Self) !void {
 fn setupMetalLayer(self: *Self) !void {
     if (self.view == null) return error.NoView;
 
-    const layer_class = c.objc_getClass("CAMetalLayer");
-    const alloc_sel = c.sel_registerName("alloc");
-    const init_sel = c.sel_registerName("init");
+    const layer_class = apl_runtime.objc_getClass("CAMetalLayer");
+    const alloc_sel = apl_runtime.sel_registerName("alloc");
+    const init_sel = apl_runtime.sel_registerName("init");
 
-    const metal_layer = c.objc_msgSend(layer_class, alloc_sel);
-    self.metal_layer = @ptrCast(c.objc_msgSend(metal_layer, init_sel));
+    const metal_layer = apl_runtime.objc_msgSend(layer_class, alloc_sel);
+    self.metal_layer = @ptrCast(apl_runtime.objc_msgSend(metal_layer, init_sel));
 
     if (self.metal_layer == null) {
         return error.MetalLayerCreationFailed;
     }
 
-    const set_device_sel = c.sel_registerName("setDevice:");
-    _ = c.objc_msgSend(self.metal_layer.?, set_device_sel, self.renderer.?.metal.device);
+    const set_device_sel = apl_runtime.sel_registerName("setDevice:");
+    _ = apl_runtime.objc_msgSend(self.metal_layer.?, set_device_sel, self.renderer.?.metal.device);
 
-    const set_pixel_format_sel = c.sel_registerName("setPixelFormat:");
-    _ = c.objc_msgSend(self.metal_layer.?, set_pixel_format_sel, @as(c.MTLPixelFormat, c.MTLPixelFormatBGRA8Unorm_sRGB));
+    const set_pixel_format_sel = apl_runtime.sel_registerName("setPixelFormat:");
+    _ = apl_runtime.objc_msgSend(self.metal_layer.?, set_pixel_format_sel, @as(apl_runtime.MTLPixelFormat, apl_runtime.MTLPixelFormatBGRA8Unorm_sRGB));
 
-    const set_fb_only_sel = c.sel_registerName("setFramebufferOnly:");
-    _ = c.objc_msgSend(self.metal_layer.?, set_fb_only_sel, true);
+    const set_fb_only_sel = apl_runtime.sel_registerName("setFramebufferOnly:");
+    _ = apl_runtime.objc_msgSend(self.metal_layer.?, set_fb_only_sel, true);
 
-    const set_scale_sel = c.sel_registerName("setContentsScale:");
-    const screen_sel = c.sel_registerName("screen");
-    const screen = c.objc_msgSend(self.window.?, screen_sel);
-    const backing_scale_sel = c.sel_registerName("backingScaleFactor");
-    const scale: f64 = @bitCast(c.objc_msgSend(screen, backing_scale_sel));
-    _ = c.objc_msgSend(self.metal_layer.?, set_scale_sel, scale);
+    const set_scale_sel = apl_runtime.sel_registerName("setContentsScale:");
+    const screen_sel = apl_runtime.sel_registerName("screen");
+    const screen = apl_runtime.objc_msgSend(self.window.?, screen_sel);
+    const backing_scale_sel = apl_runtime.sel_registerName("backingScaleFactor");
+    const scale: f64 = @bitCast(apl_runtime.objc_msgSend(screen, backing_scale_sel));
+    _ = apl_runtime.objc_msgSend(self.metal_layer.?, set_scale_sel, scale);
 
-    const set_layer_sel = c.sel_registerName("setLayer:");
-    _ = c.objc_msgSend(self.view.?, set_layer_sel, self.metal_layer.?);
+    const set_layer_sel = apl_runtime.sel_registerName("setLayer:");
+    _ = apl_runtime.objc_msgSend(self.view.?, set_layer_sel, self.metal_layer.?);
 
-    const set_wants_layer = c.sel_registerName("setWantsLayer:");
-    _ = c.objc_msgSend(self.view.?, set_wants_layer, true);
+    const set_wants_layer = apl_runtime.sel_registerName("setWantsLayer:");
+    _ = apl_runtime.objc_msgSend(self.view.?, set_wants_layer, true);
 
-    const set_policy_sel = c.sel_registerName("setLayerContentsRedrawPolicy:");
-    _ = c.objc_msgSend(self.view.?, set_policy_sel, @as(c.NSViewLayerContentsRedrawPolicy, c.NSViewLayerContentsRedrawPolicyDuringViewResize));
+    const set_policy_sel = apl_runtime.sel_registerName("setLayerContentsRedrawPolicy:");
+    _ = apl_runtime.objc_msgSend(self.view.?, set_policy_sel, @as(apl_runtime.NSViewLayerContentsRedrawPolicy, apl_runtime.NSViewLayerContentsRedrawPolicyDuringViewResize));
 }
 
 pub fn run(self: *Self) !void {
     if (!self.running) return;
 
-    const ns_app_class = c.objc_getClass("NSApplication");
-    const shared_app_sel = c.sel_registerName("sharedApplication");
-    const ns_app = c.objc_msgSend(ns_app_class, shared_app_sel);
+    const ns_app_class = apl_runtime.objc_getClass("NSApplication");
+    const shared_app_sel = apl_runtime.sel_registerName("sharedApplication");
+    const ns_app = apl_runtime.objc_msgSend(ns_app_class, shared_app_sel);
 
     while (self.running) {
-        const mode_sel = c.sel_registerName("defaultRunLoopMode");
-        const mode = c.objc_msgSend(c.objc_getClass("NSRunLoop"), mode_sel);
-        const distant_future_sel = c.sel_registerName("distantFuture");
-        const distant_future = c.objc_msgSend(c.objc_getClass("NSDate"), distant_future_sel);
+        const mode_sel = apl_runtime.sel_registerName("defaultRunLoopMode");
+        const mode = apl_runtime.objc_msgSend(apl_runtime.objc_getClass("NSRunLoop"), mode_sel);
+        const distant_future_sel = apl_runtime.sel_registerName("distantFuture");
+        const distant_future = apl_runtime.objc_msgSend(apl_runtime.objc_getClass("NSDate"), distant_future_sel);
 
-        const next_event_sel = c.sel_registerName("nextEventMatchingMask:untilDate:inMode:dequeue:");
-        const event = c.objc_msgSend(ns_app, next_event_sel, @as(c.NSEventMask, c.NSEventMaskAny), distant_future, mode, true);
+        const next_event_sel = apl_runtime.sel_registerName("nextEventMatchingMask:untilDate:inMode:dequeue:");
+        const event = apl_runtime.objc_msgSend(ns_app, next_event_sel, @as(apl_runtime.NSEventMask, apl_runtime.NSEventMaskAny), distant_future, mode, true);
 
         if (event) |e| {
-            const send_event_sel = c.sel_registerName("sendEvent:");
-            _ = c.objc_msgSend(ns_app, send_event_sel, e);
+            const send_event_sel = apl_runtime.sel_registerName("sendEvent:");
+            _ = apl_runtime.objc_msgSend(ns_app, send_event_sel, e);
         }
 
         try self.terminal.?.processInput();
@@ -226,8 +221,8 @@ pub fn run(self: *Self) !void {
 fn render(self: *Self) !void {
     if (self.window == null or self.metal_layer == null or self.renderer == null) return;
 
-    const frame_sel = c.sel_registerName("frame");
-    const frame: c.NSRect = @bitCast(c.objc_msgSend(self.view.?, frame_sel));
+    const frame_sel = apl_runtime.sel_registerName("frame");
+    const frame: apl_runtime.NSRect = @bitCast(apl_runtime.objc_msgSend(self.view.?, frame_sel));
     const width = @as(u32, @intFromFloat(frame.size.width));
     const height = @as(u32, @intFromFloat(frame.size.height));
 

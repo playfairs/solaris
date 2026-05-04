@@ -1,12 +1,8 @@
 const std = @import("std");
-const c = @cImport({
-    @cInclude("CoreText/CoreText.h");
-    @cInclude("CoreGraphics/CoreGraphics.h");
-    @cInclude("CoreFoundation/CoreFoundation.h");
-});
+const apl_runtime = @import("apl_runtime_trans_c");
 
 allocator: std.mem.Allocator,
-font: *c.CTFontRef,
+font: *apl_runtime.CTFontRef,
 cell_width: u32,
 cell_height: u32,
 baseline: u32,
@@ -14,43 +10,43 @@ baseline: u32,
 const Self = @This();
 
 pub fn init(allocator: std.mem.Allocator, family_name: []const u8, size: f32) !Self {
-    const name_cfstring = c.CFStringCreateWithBytes(
+    const name_cfstring = apl_runtime.CFStringCreateWithBytes(
         null,
         family_name.ptr,
         @intCast(family_name.len),
-        c.kCFStringEncodingUTF8,
+        apl_runtime.kCFStringEncodingUTF8,
         false,
         null,
     );
-    defer c.CFRelease(name_cfstring);
+    defer apl_runtime.CFRelease(name_cfstring);
 
-    const descriptor = c.CTFontDescriptorCreateWithNameAndSize(name_cfstring, size);
-    defer c.CFRelease(descriptor);
+    const descriptor = apl_runtime.CTFontDescriptorCreateWithNameAndSize(name_cfstring, size);
+    defer apl_runtime.CFRelease(descriptor);
 
-    const font = c.CTFontCreateWithFontDescriptor(descriptor, size, null);
+    const font = apl_runtime.CTFontCreateWithFontDescriptor(descriptor, size, null);
     if (font == null) {
         return error.FontCreationFailed;
     }
 
-    const ascent = c.CTFontGetAscent(font);
-    const descent = c.CTFontGetDescent(font);
-    const leading = c.CTFontGetLeading(font);
+    const ascent = apl_runtime.CTFontGetAscent(font);
+    const descent = apl_runtime.CTFontGetDescent(font);
+    const leading = apl_runtime.CTFontGetLeading(font);
     const cell_height = @as(u32, @intFromFloat(@ceil(ascent + descent + leading)));
 
     const chars = "M";
-    const chars_cfstring = c.CFStringCreateWithBytes(
+    const chars_cfstring = apl_runtime.CFStringCreateWithBytes(
         null,
         chars.ptr,
         @intCast(chars.len),
-        c.kCFStringEncodingUTF8,
+        apl_runtime.kCFStringEncodingUTF8,
         false,
         null,
     );
-    defer c.CFRelease(chars_cfstring);
+    defer apl_runtime.CFRelease(chars_cfstring);
 
-    const glyph = c.CTFontGetGlyphWithName(font, chars_cfstring);
-    var advance: c.CGSize = undefined;
-    _ = c.CTFontGetAdvancesForGlyphs(font, c.kCTFontOrientationHorizontal, &glyph, &advance, 1);
+    const glyph = apl_runtime.CTFontGetGlyphWithName(font, chars_cfstring);
+    var advance: apl_runtime.CGSize = undefined;
+    _ = apl_runtime.CTFontGetAdvancesForGlyphs(font, apl_runtime.kCTFontOrientationHorizontal, &glyph, &advance, 1);
     const cell_width = @as(u32, @intFromFloat(@ceil(advance.width)));
 
     return .{
@@ -64,7 +60,7 @@ pub fn init(allocator: std.mem.Allocator, family_name: []const u8, size: f32) !S
 
 pub fn deinit(self: *Self) void {
     if (self.font) |font| {
-        c.CFRelease(font);
+        apl_runtime.CFRelease(font);
     }
 }
 
@@ -81,16 +77,16 @@ pub fn renderGlyph(self: *Self, allocator: std.mem.Allocator, codepoint: u21) !?
         }
     };
 
-    const chars_cfstring = c.CFStringCreateWithBytes(null, @ptrCast(&utf16_buffer), utf16_len * 2, c.kCFStringEncodingUTF16LE, false);
-    defer c.CFRelease(chars_cfstring);
+    const chars_cfstring = apl_runtime.CFStringCreateWithBytes(null, @ptrCast(&utf16_buffer), utf16_len * 2, apl_runtime.kCFStringEncodingUTF16LE, false);
+    defer apl_runtime.CFRelease(chars_cfstring);
 
-    const glyph = c.CTFontGetGlyphWithName(self.font, chars_cfstring);
+    const glyph = apl_runtime.CTFontGetGlyphWithName(self.font, chars_cfstring);
     if (glyph == 0) return null;
 
-    const bounds = c.CTFontGetBoundingRectsForGlyphs(self.font, c.kCTFontOrientationHorizontal, &glyph, null, 1);
+    const bounds = apl_runtime.CTFontGetBoundingRectsForGlyphs(self.font, apl_runtime.kCTFontOrientationHorizontal, &glyph, null, 1);
 
-    var advance: c.CGSize = undefined;
-    _ = c.CTFontGetAdvancesForGlyphs(self.font, c.kCTFontOrientationHorizontal, &glyph, &advance, 1);
+    var advance: apl_runtime.CGSize = undefined;
+    _ = apl_runtime.CTFontGetAdvancesForGlyphs(self.font, apl_runtime.kCTFontOrientationHorizontal, &glyph, &advance, 1);
 
     const width = @as(u32, @intFromFloat(@ceil(bounds.size.width)));
     const height = @as(u32, @intFromFloat(@ceil(bounds.size.height)));
@@ -111,21 +107,21 @@ pub fn renderGlyph(self: *Self, allocator: std.mem.Allocator, codepoint: u21) !?
     const bitmap_data = try allocator.alloc(u8, height * bytes_per_row);
     @memset(bitmap_data, 0);
 
-    const color_space = c.CGColorSpaceCreateDeviceRGB();
-    defer c.CGColorSpaceRelease(color_space);
+    const color_space = apl_runtime.CGColorSpaceCreateDeviceRGB();
+    defer apl_runtime.CGColorSpaceRelease(color_space);
 
-    const context = c.CGBitmapContextCreate(bitmap_data.ptr, width, height, 8, bytes_per_row, color_space, c.kCGImageAlphaPremultipliedLast);
-    defer c.CGContextRelease(context);
+    const context = apl_runtime.CGBitmapContextCreate(bitmap_data.ptr, width, height, 8, bytes_per_row, color_space, apl_runtime.kCGImageAlphaPremultipliedLast);
+    defer apl_runtime.CGContextRelease(context);
 
-    c.CGContextSetRGBFillColor(context, 1, 1, 1, 1);
+    apl_runtime.CGContextSetRGBFillColor(context, 1, 1, 1, 1);
 
-    const position = c.CGPoint{
+    const position = apl_runtime.CGPoint{
         .x = -bounds.origin.x,
         .y = -bounds.origin.y,
     };
 
-    c.CGContextSetTextPosition(context, position.x, position.y);
-    c.CGContextShowGlyphsAtPositions(context, &glyph, &position, 1);
+    apl_runtime.CGContextSetTextPosition(context, position.x, position.y);
+    apl_runtime.CGContextShowGlyphsAtPositions(context, &glyph, &position, 1);
 
     return .{
         .bitmap = bitmap_data,
@@ -167,13 +163,13 @@ pub fn hasGlyph(self: *Self, codepoint: u21) bool {
     };
     _ = utf16_len;
 
-    const chars_cfstring = c.CFStringCreateWithCharacters(
+    const chars_cfstring = apl_runtime.CFStringCreateWithCharacters(
         null,
         &utf16_buffer,
         if (codepoint > 0xFFFF) 2 else 1,
     );
-    defer c.CFRelease(chars_cfstring);
+    defer apl_runtime.CFRelease(chars_cfstring);
 
-    const glyph = c.CTFontGetGlyphWithName(self.font, chars_cfstring);
+    const glyph = apl_runtime.CTFontGetGlyphWithName(self.font, chars_cfstring);
     return glyph != 0;
 }

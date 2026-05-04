@@ -1,9 +1,5 @@
 const std = @import("std");
-const c = @cImport({
-    @cInclude("objc/runtime.h");
-    @cInclude("objc/message.h");
-    @cInclude("Cocoa/Cocoa.h");
-});
+const apl_runtime = @import("apl_runtime_trans_c");
 
 const Window = @import("Window.zig");
 const Config = @import("../../config/Config.zig");
@@ -13,7 +9,7 @@ const Mouse = @import("../../input/Mouse.zig");
 allocator: std.mem.Allocator,
 config: Config,
 window: Window,
-delegate_class: ?*c.objc_class,
+delegate_class: ?*apl_runtime.objc_class,
 
 const Self = @This();
 
@@ -43,8 +39,8 @@ pub fn run(self: *Self) !void {
 }
 
 fn createDelegateClass(self: *Self) !void {
-    const super_class = c.objc_getClass("NSObject");
-    const delegate_class = c.objc_allocateClassPair(super_class, "SolarisAppDelegate", 0);
+    const super_class = apl_runtime.objc_getClass("NSObject");
+    const delegate_class = apl_runtime.objc_allocateClassPair(super_class, "SolarisAppDelegate", 0);
 
     if (delegate_class == null) {
         return error.ClassAllocationFailed;
@@ -52,64 +48,64 @@ fn createDelegateClass(self: *Self) !void {
 
     const window_ivar_name = "window_";
     const window_type = "^";
-    _ = c.class_addIvar(delegate_class, window_ivar_name, @sizeOf(*c.NSWindow), @alignOf(*c.NSWindow), window_type);
+    _ = apl_runtime.class_addIvar(delegate_class, window_ivar_name, @sizeOf(*apl_runtime.NSWindow), @alignOf(*apl_runtime.NSWindow), window_type);
 
-    const app_will_finish_sel = c.sel_registerName("applicationWillFinishLaunching:");
-    _ = c.class_addMethod(delegate_class, app_will_finish_sel, @intCast(@intFromPtr(&appWillFinishLaunching)), "v@:@");
+    const app_will_finish_sel = apl_runtime.sel_registerName("applicationWillFinishLaunching:");
+    _ = apl_runtime.class_addMethod(delegate_class, app_will_finish_sel, @intCast(@intFromPtr(&appWillFinishLaunching)), "v@:@");
 
-    const app_will_terminate_sel = c.sel_registerName("applicationWillTerminate:");
-    _ = c.class_addMethod(delegate_class, app_will_terminate_sel, @intCast(@intFromPtr(&appWillTerminate)), "v@:@");
+    const app_will_terminate_sel = apl_runtime.sel_registerName("applicationWillTerminate:");
+    _ = apl_runtime.class_addMethod(delegate_class, app_will_terminate_sel, @intCast(@intFromPtr(&appWillTerminate)), "v@:@");
 
-    const key_down_sel = c.sel_registerName("keyDown:");
-    _ = c.class_addMethod(delegate_class, key_down_sel, @intCast(@intFromPtr(&keyDown)), "v@:@");
+    const key_down_sel = apl_runtime.sel_registerName("keyDown:");
+    _ = apl_runtime.class_addMethod(delegate_class, key_down_sel, @intCast(@intFromPtr(&keyDown)), "v@:@");
 
-    c.objc_registerClassPair(delegate_class);
+    apl_runtime.objc_registerClassPair(delegate_class);
     self.delegate_class = delegate_class;
 
-    const alloc_sel = c.sel_registerName("alloc");
-    const init_sel = c.sel_registerName("init");
-    const delegate = c.objc_msgSend(delegate_class, alloc_sel);
-    _ = c.objc_msgSend(delegate, init_sel);
+    const alloc_sel = apl_runtime.sel_registerName("alloc");
+    const init_sel = apl_runtime.sel_registerName("init");
+    const delegate = apl_runtime.objc_msgSend(delegate_class, alloc_sel);
+    _ = apl_runtime.objc_msgSend(delegate, init_sel);
 
-    const ns_app_class = c.objc_getClass("NSApplication");
-    const shared_app_sel = c.sel_registerName("sharedApplication");
-    const ns_app = c.objc_msgSend(ns_app_class, shared_app_sel);
+    const ns_app_class = apl_runtime.objc_getClass("NSApplication");
+    const shared_app_sel = apl_runtime.sel_registerName("sharedApplication");
+    const ns_app = apl_runtime.objc_msgSend(ns_app_class, shared_app_sel);
 
-    const set_delegate_sel = c.sel_registerName("setDelegate:");
-    _ = c.objc_msgSend(ns_app, set_delegate_sel, delegate);
+    const set_delegate_sel = apl_runtime.sel_registerName("setDelegate:");
+    _ = apl_runtime.objc_msgSend(ns_app, set_delegate_sel, delegate);
 }
 
-fn appWillFinishLaunching(self_id: *c.objc_object, _: c.SEL, notification: *c.objc_object) callconv(.C) void {
+fn appWillFinishLaunching(self_id: *apl_runtime.objc_object, _: apl_runtime.SEL, notification: *apl_runtime.objc_object) callconv(.C) void {
     _ = self_id;
     _ = notification;
 }
 
-fn appWillTerminate(self_id: *c.objc_object, _: c.SEL, notification: *c.objc_object) callconv(.C) void {
+fn appWillTerminate(self_id: *apl_runtime.objc_object, _: apl_runtime.SEL, notification: *apl_runtime.objc_object) callconv(.C) void {
     _ = self_id;
     _ = notification;
 }
 
-fn keyDown(self_id: *c.objc_object, _: c.SEL, event: *c.NSEvent) callconv(.C) void {
+fn keyDown(self_id: *apl_runtime.objc_object, _: apl_runtime.SEL, event: *apl_runtime.NSEvent) callconv(.C) void {
     _ = self_id;
 
-    const key_code_sel = c.sel_registerName("keyCode");
-    const key_code: u16 = @intCast(@intFromPtr(c.objc_msgSend(event, key_code_sel)));
+    const key_code_sel = apl_runtime.sel_registerName("keyCode");
+    const key_code: u16 = @intCast(@intFromPtr(apl_runtime.objc_msgSend(event, key_code_sel)));
 
-    const modifier_flags_sel = c.sel_registerName("modifierFlags");
-    const modifier_flags: c.NSEventModifierFlags = @intCast(@intFromPtr(c.objc_msgSend(event, modifier_flags_sel)));
+    const modifier_flags_sel = apl_runtime.sel_registerName("modifierFlags");
+    const modifier_flags: apl_runtime.NSEventModifierFlags = @intCast(@intFromPtr(apl_runtime.objc_msgSend(event, modifier_flags_sel)));
 
     const modifiers = Keyboard.KeyEvent.Modifiers{
-        .shift = (modifier_flags & c.NSEventModifierFlagShift) != 0,
-        .control = (modifier_flags & c.NSEventModifierFlagControl) != 0,
-        .alt = (modifier_flags & c.NSEventModifierFlagOption) != 0,
-        .command = (modifier_flags & c.NSEventModifierFlagCommand) != 0,
-        .caps_lock = (modifier_flags & c.NSEventModifierFlagCapsLock) != 0,
+        .shift = (modifier_flags & apl_runtime.NSEventModifierFlagShift) != 0,
+        .control = (modifier_flags & apl_runtime.NSEventModifierFlagControl) != 0,
+        .alt = (modifier_flags & apl_runtime.NSEventModifierFlagOption) != 0,
+        .command = (modifier_flags & apl_runtime.NSEventModifierFlagCommand) != 0,
+        .caps_lock = (modifier_flags & apl_runtime.NSEventModifierFlagCapsLock) != 0,
     };
 
-    const chars_sel = c.sel_registerName("characters");
-    const chars = c.objc_msgSend(event, chars_sel);
-    const utf8_sel = c.sel_registerName("UTF8String");
-    const utf8_str: [*c]const u8 = @ptrCast(c.objc_msgSend(chars, utf8_sel));
+    const chars_sel = apl_runtime.sel_registerName("characters");
+    const chars = apl_runtime.objc_msgSend(event, chars_sel);
+    const utf8_sel = apl_runtime.sel_registerName("UTF8String");
+    const utf8_str: [*c]const u8 = @ptrCast(apl_runtime.objc_msgSend(chars, utf8_sel));
 
     const char_len = std.mem.len(utf8_str);
     if (char_len > 0) {

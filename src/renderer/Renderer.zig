@@ -1,9 +1,5 @@
 const std = @import("std");
-const c = @cImport({
-    @cInclude("objc/runtime.h");
-    @cInclude("objc/message.h");
-    @cInclude("QuartzCore/CAMetalLayer.h");
-});
+const apl_runtime = @import("apl_runtime_trans_c");
 
 const Metal = @import("Metal.zig");
 const Cell = @import("Cell.zig");
@@ -130,20 +126,20 @@ pub fn resize(self: *Self, width: u32, height: u32) void {
 pub fn render(
     self: *Self,
     screen: *const Screen,
-    metal_layer: *c.CAMetalLayer,
+    metal_layer: *apl_runtime.CAMetalLayer,
     overlay_opacity: f32,
 ) !void {
     if (self.face == null) return;
 
-    const next_sel = c.sel_registerName("nextDrawable");
-    const drawable: ?*c.CAMetalDrawable = @ptrCast(c.objc_msgSend(metal_layer, next_sel));
+    const next_sel = apl_runtime.sel_registerName("nextDrawable");
+    const drawable: ?*apl_runtime.CAMetalDrawable = @ptrCast(apl_runtime.objc_msgSend(metal_layer, next_sel));
     if (drawable == null) return;
 
     try self.buildGeometry(screen, overlay_opacity);
 
     const clear_color = [4]f32{ 0, 0, 0, 0 };
     const render_pass_desc = try Metal.createRenderPassDescriptor(drawable.?, clear_color);
-    defer _ = c.objc_msgSend(render_pass_desc, c.sel_release);
+    defer _ = apl_runtime.objc_msgSend(render_pass_desc, apl_runtime.sel_release);
 
     try self.metal.render(
         drawable.?,
