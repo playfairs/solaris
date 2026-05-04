@@ -1,0 +1,22 @@
+.{
+    .name = "solaris",
+    .version = "0.1.0",
+    .minimum_zig_version = "0.13.0",
+    .dependencies = .{
+        .zigimg = .{
+            .url = "https://github.com/zigimg/zigimg/archive/refs/tags/v0.1.0.tar.gz",
+            .hash = "1220dd6c3714550633b7a5e4c9c989fd63f76a1a36f514963730f8d2f05fe8d05c32",
+        },
+        .ziglyph = .{
+            .url = "https://github.com/frmdstryr/ziglyph/archive/refs/heads/main.tar.gz",
+            .hash = "1220a78a831f0c8f5a0209a947b43fb107cdf1a1ebbf423fd8c2a535065cf60c2e44",
+        },
+    },
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "flake.nix",
+        "src",
+        "assets",
+    },
+}

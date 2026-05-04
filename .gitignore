@@ -1,0 +1,8 @@
+# zig files
+.zig-cache
+
+# macos slop
+.DS_Store
+
+# nix artifacts
+result*
