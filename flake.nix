@@ -4,7 +4,7 @@
     zig.url = "github:mitchellh/zig-overlay";
   };
 
-  outputs = { self, nixpkgs, zig }: 
+  outputs = { nixpkgs, zig, ... }: 
     let
       systems = [ "aarch64-darwin" "x86_64-darwin" "aarch64-linux" "x86_64-linux" ];
       forAllSystems = f: nixpkgs.lib.genAttrs systems (system: f system);
@@ -13,7 +13,7 @@
       devShells = forAllSystems (system:
         let
           pkgs = nixpkgs.legacyPackages.${system};
-          zig-pkg = zig.packages.${system}.master;
+          zig-pkg = zig.packages.${system}.default;
         in
         {
           default = pkgs.mkShell {
