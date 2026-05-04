@@ -25,7 +25,18 @@ pub const KeyEvent = struct {
         down,
         left,
         right,
-        f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12,
+        f1,
+        f2,
+        f3,
+        f4,
+        f5,
+        f6,
+        f7,
+        f8,
+        f9,
+        f10,
+        f11,
+        f12,
         space,
         enter,
     };
@@ -48,7 +59,7 @@ pub const KeyEvent = struct {
 
 pub fn keyToEscapeSequence(allocator: std.mem.Allocator, event: KeyEvent) ![]const u8 {
     const mods = event.modifiers;
-    
+
     switch (event.key) {
         .special => |key| {
             const base_seq = switch (key) {
@@ -98,7 +109,7 @@ pub fn keyToEscapeSequence(allocator: std.mem.Allocator, event: KeyEvent) ![]con
                 .f11 => return try allocator.dupe(u8, "\x1b[23~"),
                 .f12 => return try allocator.dupe(u8, "\x1b[24~"),
                 .space => return try allocator.dupe(u8, " "),
-            }
+            };
             return base_seq;
         },
         .character => |char| {
@@ -116,14 +127,14 @@ pub fn keyToEscapeSequence(allocator: std.mem.Allocator, event: KeyEvent) ![]con
                 };
                 return try std.fmt.allocPrint(allocator, "{c}", .{ctrl_char});
             }
-            
+
             if (mods.alt) {
                 const buf = try allocator.alloc(u8, std.unicode.utf8Size(char) + 1);
                 buf[0] = '\x1b';
                 _ = std.unicode.utf8Encode(char, buf[1..]) catch unreachable;
                 return buf;
             }
-            
+
             const buf = try allocator.alloc(u8, std.unicode.utf8Size(char));
             _ = std.unicode.utf8Encode(char, buf) catch unreachable;
             return buf;

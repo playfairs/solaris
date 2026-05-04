@@ -198,7 +198,6 @@ pub fn run(self: *Self) !void {
     const ns_app = c.objc_msgSend(ns_app_class, shared_app_sel);
 
     while (self.running) {
-        const run_mode_sel = c.sel_registerName("runMode:beforeDate:");
         const mode_sel = c.sel_registerName("defaultRunLoopMode");
         const mode = c.objc_msgSend(c.objc_getClass("NSRunLoop"), mode_sel);
         const distant_future_sel = c.sel_registerName("distantFuture");

@@ -30,19 +30,19 @@ pub const Quad = struct {
         const x1 = x + width;
         const y1 = y + height;
 
-        const u0 = atlas_x / atlas_size;
+        const tex_u0 = atlas_x / atlas_size;
         const v0 = atlas_y / atlas_size;
-        const u1 = (atlas_x + atlas_width) / atlas_size;
+        const tex_u1 = (atlas_x + atlas_width) / atlas_size;
         const v1 = (atlas_y + atlas_height) / atlas_size;
 
         const glyph_info = [4]f32{ atlas_x, atlas_y, atlas_width, atlas_height };
 
         return .{
             .vertices = .{
-                .{ .position = .{ x0, y0 }, .tex_coord = .{ u0, v0 }, .fg_color = fg_color, .bg_color = bg_color, .glyph_info = glyph_info },
-                .{ .position = .{ x1, y0 }, .tex_coord = .{ u1, v0 }, .fg_color = fg_color, .bg_color = bg_color, .glyph_info = glyph_info },
-                .{ .position = .{ x0, y1 }, .tex_coord = .{ u0, v1 }, .fg_color = fg_color, .bg_color = bg_color, .glyph_info = glyph_info },
-                .{ .position = .{ x1, y1 }, .tex_coord = .{ u1, v1 }, .fg_color = fg_color, .bg_color = bg_color, .glyph_info = glyph_info },
+                .{ .position = .{ x0, y0 }, .tex_coord = .{ tex_u0, v0 }, .fg_color = fg_color, .bg_color = bg_color, .glyph_info = glyph_info },
+                .{ .position = .{ x1, y0 }, .tex_coord = .{ tex_u1, v0 }, .fg_color = fg_color, .bg_color = bg_color, .glyph_info = glyph_info },
+                .{ .position = .{ x0, y1 }, .tex_coord = .{ tex_u0, v1 }, .fg_color = fg_color, .bg_color = bg_color, .glyph_info = glyph_info },
+                .{ .position = .{ x1, y1 }, .tex_coord = .{ tex_u1, v1 }, .fg_color = fg_color, .bg_color = bg_color, .glyph_info = glyph_info },
             },
             .indices = .{ 0, 1, 2, 1, 3, 2 },
         };

@@ -336,6 +336,7 @@ pub fn render(
     cell_vertices: []const Cell.CellVertex,
     cell_indices: []const u16,
 ) !void {
+    _ = background_indices;
     if (self.command_queue == null) return error.NotInitialized;
 
     const cmd_buf_sel = c.sel_registerName("commandBuffer");

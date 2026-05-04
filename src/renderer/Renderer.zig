@@ -225,6 +225,7 @@ fn resolveColor(self: *Self, color: Screen.Cell.Color, context: enum { foregroun
 }
 
 pub fn needsRerender(self: *Self, screen: *const Screen) bool {
+    _ = self;
     for (screen.buffer) |cell| {
         if (cell.dirty) return true;
     }
@@ -232,6 +233,7 @@ pub fn needsRerender(self: *Self, screen: *const Screen) bool {
 }
 
 pub fn markRendered(self: *Self, screen: *Screen) void {
+    _ = self;
     for (screen.buffer) |*cell| {
         cell.dirty = false;
     }

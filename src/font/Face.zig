@@ -81,26 +81,20 @@ pub fn renderGlyph(self: *Self, allocator: std.mem.Allocator, codepoint: u21) !?
         }
     };
 
-    const chars_cfstring = c.CFStringCreateWithBytes(
-        null,
-        @ptrCast(&utf16_buffer),
-        utf16_len * 2,
-        c.kCFStringEncodingUTF16LE,
-        false
-    );
+    const chars_cfstring = c.CFStringCreateWithBytes(null, @ptrCast(&utf16_buffer), utf16_len * 2, c.kCFStringEncodingUTF16LE, false);
     defer c.CFRelease(chars_cfstring);
 
     const glyph = c.CTFontGetGlyphWithName(self.font, chars_cfstring);
     if (glyph == 0) return null;
 
-    var bounds = c.CTFontGetBoundingRectsForGlyphs(self.font, c.kCTFontOrientationHorizontal, &glyph, null, 1);
-    
+    const bounds = c.CTFontGetBoundingRectsForGlyphs(self.font, c.kCTFontOrientationHorizontal, &glyph, null, 1);
+
     var advance: c.CGSize = undefined;
     _ = c.CTFontGetAdvancesForGlyphs(self.font, c.kCTFontOrientationHorizontal, &glyph, &advance, 1);
 
     const width = @as(u32, @intFromFloat(@ceil(bounds.size.width)));
     const height = @as(u32, @intFromFloat(@ceil(bounds.size.height)));
-    
+
     if (width == 0 or height == 0) {
         return .{
             .bitmap = &[_]u8{},
@@ -120,15 +114,7 @@ pub fn renderGlyph(self: *Self, allocator: std.mem.Allocator, codepoint: u21) !?
     const color_space = c.CGColorSpaceCreateDeviceRGB();
     defer c.CGColorSpaceRelease(color_space);
 
-    const context = c.CGBitmapContextCreate(
-        bitmap_data.ptr,
-        width,
-        height,
-        8,
-        bytes_per_row,
-        color_space,
-        c.kCGImageAlphaPremultipliedLast
-    );
+    const context = c.CGBitmapContextCreate(bitmap_data.ptr, width, height, 8, bytes_per_row, color_space, c.kCGImageAlphaPremultipliedLast);
     defer c.CGContextRelease(context);
 
     c.CGContextSetRGBFillColor(context, 1, 1, 1, 1);
@@ -178,9 +164,8 @@ pub fn hasGlyph(self: *Self, codepoint: u21) bool {
         } else {
             return false;
         }
-    } else {
-        _ = utf16_len;
     };
+    _ = utf16_len;
 
     const chars_cfstring = c.CFStringCreateWithCharacters(
         null,

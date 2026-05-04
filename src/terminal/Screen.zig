@@ -243,6 +243,7 @@ pub fn insertLines(self: *Self, count: usize) void {
 
 pub fn deleteLines(self: *Self, count: usize) void {
     const top = if (self.scroll_region) |r| r.top else 0;
+    _ = top;
     const bottom = if (self.scroll_region) |r| r.bottom else self.rows - 1;
     const actual_count = @min(count, bottom - self.cursor.y + 1);
 
