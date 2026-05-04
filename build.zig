@@ -9,20 +9,17 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
-    const ziglyph = b.dependency("ziglyph", .{
-        .target = target,
-        .optimize = optimize,
-    });
-
     const exe = b.addExecutable(.{
         .name = "solaris",
-        .root_source_file = b.path("src/main.zig"),
-        .target = target,
-        .optimize = optimize,
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("src/main.zig"),
+            .target = target,
+            .link_libc = true,
+            .optimize = optimize,
+        }),
     });
 
     exe.root_module.addImport("zigimg", zigimg.module("zigimg"));
-    exe.root_module.addImport("ziglyph", ziglyph.module("ziglyph"));
 
     exe.linkFramework("Metal");
     exe.linkFramework("MetalKit");
@@ -31,8 +28,6 @@ pub fn build(b: *std.Build) void {
     exe.linkFramework("CoreGraphics");
     exe.linkFramework("QuartzCore");
     exe.linkFramework("UniformTypeIdentifiers");
-
-    exe.linkLibC();
 
     b.installArtifact(exe);
 
@@ -53,7 +48,6 @@ pub fn build(b: *std.Build) void {
     });
 
     unit_tests.root_module.addImport("zigimg", zigimg.module("zigimg"));
-    unit_tests.root_module.addImport("ziglyph", ziglyph.module("ziglyph"));
 
     const run_unit_tests = b.addRunArtifact(unit_tests);
     const test_step = b.step("test", "Run unit tests");

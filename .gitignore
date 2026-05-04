@@ -1,5 +1,6 @@
 # zig files
 .zig-cache
+zig-pkg
 
 # macos slop
 .DS_Store
