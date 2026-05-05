@@ -1,9 +1,7 @@
 ![](assets/saturn.png)
 
-# ~~Solaris~~
+# Solaris
 
-~~A basic terminal coded in Zig, for people who like Space.~~
+A basic terminal coded in Zig, for people who like Space.
 
 ---
-
-# Archived.
