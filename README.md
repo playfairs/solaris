@@ -1,4 +1,4 @@
-![](assets/saturn.png)
+![](assets/saturn2.png)
 
 # Solaris
 
